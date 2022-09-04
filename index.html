@@ -12,53 +12,81 @@
   <div id= "grid">
   <div class = "list">
     <ul id="html_list"> <!-- ul목차(무질서 목차) / ul과 li목차는 부모-자식 태그 관계-->
-      <div class ="list_title">HTML 구현 기술목록</div>
-        <li><strong><del>이미지 구현</del></strong></li> <!-- del = 취소선-->
-        <li><strong><del>텍스트하이퍼링크+멀티웹페이지 구현</del></strong></li><!-- li = list의 약자 목차를 나타내는 태그 -->
-        <li><strong><del>웹호스팅 구현</del></strong></li>
-        <li><strong><del>댓글서비스(disqus)를 웹사이트에 구현</del></strong></li>
-        <li><strong><del>유튜브 동영상 구현</del></strong></li>
-        <li><strong><del>방문자분석기 구현</del></strong></li>
-        <li>기타등등..</li>
-        </ul>
-    <ol "css_list"> <!-- ol목차(질서 목차) / ol과 li목차는 부모-자식 태그 관계-->
-      <div class ="list_title">CSS 구현 기술목록</div>
-        <li><strong><del>글자색구현</del></strong></li>
-        <li><strong><del>가운데정렬구현</del></strong></li>
-        <li><strong><del>그리드나누기구현</del></strong></li>
-        <li><strong><del>동적반응 구현</del></strong></li>
-        <li>그외기타등등..</li>
-    </ol>
-    <ol "js_list"> <!-- ol목차(질서 목차) / ol과 li목차는 부모-자식 태그 관계-->
-      <div class ="list_title">JavaScript 구현 기술목록</div>
-        <li><del><strong>다크모드</strong>(유지보수 쉽게 객체화 완료)</del></li>
-        <del><li><strong>jQuery 활용</strong> $('body').css();</del></li>
-        <li>그외기타등등..</li>
-    </ol>
+      <div class ="list_title">음식점 리뷰 및 관리 웹서비스 기획</div>
+        <li><strong><del>학교 근처(1KM 반경) 식당과 카페,술집 플로팅</del></strong></li> <!-- del = 취소선-->
+        <li><strong><del>교내 사람들의 솔직한 5점 만점 리뷰</del></strong></li><!-- li = list의 약자 목차를 나타내는 태그 -->
+        <li><strong><del>총 식당 평균 별점 / 5점 준 횟수 / 1점 준 횟수를 프로필옆에 표시하는 방안으로 기존의 문제점을 개선</del></strong></li>
+        <li><strong><del>리뷰를 달았던 식당을 기반으로 비슷한 음식의 종류를 파는 근처 식당을 추천</del></strong></li>
+        <li><strong><del>관리자 모드도 구현하여 메뉴판을 관리하거나 타임세일 쿠폰같은 이벤트로 고객들을 유치</del></strong></li>
+    </ul>
 </div>
 <div id= "article">
 <div id = "intro">
 <p style="text-align:center;"><strong>안녕하세요!</strong>  <strong><u>2019004593 홍진수</u>의 자람 워크숍 대체과제 (OPENAPI) 활용 웹페이지</strong> 입니다.<br> <!-- p = 문단 명시 / strong = 밑줄 -->
+교내 근처 음식점을 플로팅해서 보여주는 것을 구현해보았습니다<br>
 <strong>※컴퓨터 브라우저환경에 최적화 되었습니다!※</strong>
 </div>
 <br></p> <!-- u = 밑줄 / br 줄바꿈 -->
-<div id="darkmode">
-  <input type="button" value='Darkmode' style=text-align: center; onclick="NightDayHandler(this);">
-</div>
     <p style="text-align:center;font-size:20px;"><strong>카카오맵 OPEN API </strong></p>
-    <div id="map" style="width:500px;height:400px;"></div>
+    <div id="map" style="width:600px;height:400px;text-align: center;"></div>
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f21d1d38bfcc5ee51dd97e24f34c680c"></script>
     <script>
       var container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
       var options = { //지도를 생성할 때 필요한 기본 옵션
-          center: new kakao.maps.LatLng(33.450701, 126.570667), //지도의 중심좌표.
+          center: new kakao.maps.LatLng(37.29651452315626, 126.83517711544107), //지도의 중심좌표.
           level: 3 //지도의 레벨(확대, 축소 정도)
       };
       var map = new kakao.maps.Map(container, options);
+      var mapTypeControl = new kakao.maps.MapTypeControl();
+
+      // 지도에 컨트롤을 추가해야 지도위에 표시됩니다
+      // kakao.maps.ControlPosition은 컨트롤이 표시될 위치를 정의하는데 TOPRIGHT는 오른쪽 위를 의미합니다
+      map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+
+      // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
+      var zoomControl = new kakao.maps.ZoomControl();
+      map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+      var positions = [
+    {
+        content: '<div>가장 만족하는 교내맛집(창업보육센터)</div>',
+        latlng: new kakao.maps.LatLng(33.450705, 126.570677)
+    },
+    {
+        content: '<div>가장 만족하는 카페(스타벅스)</div>',
+        latlng: new kakao.maps.LatLng(33.450936, 126.569477)
+    },
+    {
+        content: '<div>가장 만족하는 술집(더술)</div>',
+        latlng: new kakao.maps.LatLng(33.450879, 126.569940)
+    },
+    {
+        content: '<div>가장 만족하는 교외맛집(마라미방)</div>',
+        latlng: new kakao.maps.LatLng(33.451393, 126.570738)
+    }
+];
+
     </script>
 
    <br>
+   <h2>본래 기획안</h2>
+   <div id="text" style="text-align: center;">
+     원래는 <strong>카카오맵 open api를 활용한 음식점 리뷰 및 관리 웹서비스</strong>를 구현하려 했습니다.<br>
+     학교 근처(1KM 반경) 식당과 카페, 술집들을 <strong>카테고리별로 지도 위에 플로팅</strong>해서 전부 보여주고 <strong>교내 사람들만 리뷰를 달 수 있는 시스템</strong>을 만들려 했습니다.<br>
+     특히 기존앱의 악성리뷰등 문제가 많아 <strong>이용자의 총 식당 평균 별점 / 5점 준 횟수 / 1점 준 횟수를 프로필옆에 표시</strong>하는 방안으로 기존의 문제점을 개선하려했습니다.<br>
+     또한 리뷰를 달았던 식당을 기반으로 사용자에게 <strong>비슷한 음식의 종류를 파는 근처 식당을 추천</strong>하는 서비스,<br>
+     가게 사장님들 또한 직접 가게를 관리할 수 있게 <strong>관리자 모드</strong>도 구현하여 메뉴판을 관리하거나 <strong>타임세일 쿠폰</strong>같은 이벤트로 고객들을 유치하도록 돕고 원격 줄서기 서비스 또한 구현해 보고싶었지만...<br>
+     시간상 구현하지못하고 기획만 해서 제출하게 되었습니다.. 죄송합니다ㅜ<br>
+
  </div>
+  <h2>상세 설명</h2>
+ <div id="text2" style="text-align: center;">
+   카카오는 웹용 맵 API를 공개해 하루 할당량 이내에서 무료로 사용할 수 있도록 제공하고 있어, 개발자 등록을 마치고, API를 웹사이트에 불러왔습니다.<br>
+   본래 기획안에서 일정 기술만이라도 구현해서 제출해보자는 생각에, <strong>저의 맛집</strong>을 마커로 표시하도록 개발해보았습니다.<br>
+   추가로 마커에 인포윈도우도 함께 표시해서 나의 개인적인 식당 의견을 적어보았습니다.
+
+</div>
+</div>
 </div>
 
   </body>
