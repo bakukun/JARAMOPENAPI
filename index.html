@@ -4,18 +4,6 @@
     <title>자람 워크숍 대체과제 (2019004593 홍진수)</title> <!-- 탭이름 -->
     <meta charset="utf-8"><!-- utp-8 방식으로 저장되었다는것 명시 -->
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X99NLJGEWK"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-X99NLJGEWK');
-  </script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src ="color.js"></script>
 </head>
 
@@ -55,33 +43,20 @@
 </div>
 <br></p> <!-- u = 밑줄 / br 줄바꿈 -->
 <div id="darkmode">
-  <input type="button" value='Darkmode' style=text-align: center; onclick="
-    NightDayHandler(this);
-  ">
+  <input type="button" value='Darkmode' style=text-align: center; onclick="NightDayHandler(this);">
 </div>
-    <p style="text-align:center;font-size:20px;"><strong>역대 블로그 프로필사진</strong></p>
+    <p style="text-align:center;font-size:20px;"><strong>카카오맵 OPEN API </strong></p>
+    <div id="map" style="width:500px;height:400px;"></div>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f21d1d38bfcc5ee51dd97e24f34c680c"></script>
+    <script>
+      var container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
+      var options = { //지도를 생성할 때 필요한 기본 옵션
+          center: new kakao.maps.LatLng(33.450701, 126.570667), //지도의 중심좌표.
+          level: 3 //지도의 레벨(확대, 축소 정도)
+      };
+      var map = new kakao.maps.Map(container, options);
+    </script>
 
-  <p style="text-align:center;"><img src="https://blogpfthumb-phinf.pstatic.net/MjAyMjAxMDVfMjA0/MDAxNjQxMzE5NjE1NTE5.COzBiZRENy6EV5ZGKQje0-56wxVQY8_66xWtzruVaNEg.JIuzWlWmInmbzXBTknOWKRUg-31iLFrD9ouh1X28PUAg.PNG.h1101201/profileImage.png"width="54%"></p>
-  <p style="text-align:center; margin:10px;"><img src="https://blogpfthumb-phinf.pstatic.net/MjAyMjAyMTRfODMg/MDAxNjQ0Nzc2MDI3MTkx._ghnZaHZUdTR6b0HiDNNr0WKp8Sqe5f_FPRSvXLK-cgg.VVTCC66xHaIc0dPbv4LZd-dNIZPQGTuM7N2tNnGKaVgg.PNG.h1101201/profileImage.png"width="55%"></p>
-  <!-- img src = 이미지가 있는 주소 / width 는 사진 비율-->
-  <div class="photo">
-  <strong>Instagram&nbsp;&nbsp;</strong><a href="https://www.instagram.com/bakukun_/?hl=ko" style="color:hotpink" target="_blank" title="instagram">bakukun_</a><br>
-  <strong>Naver Blog&nbsp;&nbsp;</strong><a href="https://blog.naver.com/h1101201" style="color:green" target="_blank" title="Naver Blog">LINK</a>
-</div>
-  <br><br>
-  <!-- hyperlink 태그 = a / href = 주소 / target _blank는 새창에서 열기 /  title은 커서올려놨을때의 글상자-->
-  <ul style="text-align:center; padding-left:0px"> <!-- ol목차(질서 목차) / ol과 li목차는 부모-자식 태그 관계-->
-   <h3>다른사진은 안보고싶어?</h3>
-     <li style="display:inline-block"><a href="photo_1.html" title="d&d Partment Store" style="color:rgb(102, 103, 171)"><strong>카카오톡 배경사진  </strong></a></li>
-     <li style="display:inline-block"><a href="photo_2.html" title="형돈" style="color:rgb(102, 103, 171)"><strong>쫄깃쫄깃 흑돼지</strong></a></li><br>
-   </ul>
-
-   <div id="video">
- <br><br><p style="text-align:center; margin:5px"><strong>간단한 브이로그</strong> <br>
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/5CzKO4bHPwo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></p>
-   <p style="text-align:center; margin:5px"><strong>간단한 쿡방 </strong> <br>
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/49kTmoZf4-o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></p>
- </div>
    <br>
  </div>
 </div>
