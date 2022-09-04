@@ -1,0 +1,90 @@
+<!doctype html> <!-- 문서가 html로서 만들었다는것 문서시작에 명시 -->
+<html><!-- head와 body를 묶는 html 태그 -->
+  <head> <!-- 본문을 설명하는 정보 = head태그 -->
+    <title>자람 워크숍 대체과제 (2019004593 홍진수)</title> <!-- 탭이름 -->
+    <meta charset="utf-8"><!-- utp-8 방식으로 저장되었다는것 명시 -->
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X99NLJGEWK"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-X99NLJGEWK');
+  </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src ="color.js"></script>
+</head>
+
+<body> <!-- 본문 정보 body-->
+  <h1>자람 워크숍 대체과제</h1> <!-- 제목 명시(6까지있음)-->
+  <div id= "grid">
+  <div class = "list">
+    <ul id="html_list"> <!-- ul목차(무질서 목차) / ul과 li목차는 부모-자식 태그 관계-->
+      <div class ="list_title">HTML 구현 기술목록</div>
+        <li><strong><del>이미지 구현</del></strong></li> <!-- del = 취소선-->
+        <li><strong><del>텍스트하이퍼링크+멀티웹페이지 구현</del></strong></li><!-- li = list의 약자 목차를 나타내는 태그 -->
+        <li><strong><del>웹호스팅 구현</del></strong></li>
+        <li><strong><del>댓글서비스(disqus)를 웹사이트에 구현</del></strong></li>
+        <li><strong><del>유튜브 동영상 구현</del></strong></li>
+        <li><strong><del>방문자분석기 구현</del></strong></li>
+        <li>기타등등..</li>
+        </ul>
+    <ol "css_list"> <!-- ol목차(질서 목차) / ol과 li목차는 부모-자식 태그 관계-->
+      <div class ="list_title">CSS 구현 기술목록</div>
+        <li><strong><del>글자색구현</del></strong></li>
+        <li><strong><del>가운데정렬구현</del></strong></li>
+        <li><strong><del>그리드나누기구현</del></strong></li>
+        <li><strong><del>동적반응 구현</del></strong></li>
+        <li>그외기타등등..</li>
+    </ol>
+    <ol "js_list"> <!-- ol목차(질서 목차) / ol과 li목차는 부모-자식 태그 관계-->
+      <div class ="list_title">JavaScript 구현 기술목록</div>
+        <li><del><strong>다크모드</strong>(유지보수 쉽게 객체화 완료)</del></li>
+        <del><li><strong>jQuery 활용</strong> $('body').css();</del></li>
+        <li>그외기타등등..</li>
+    </ol>
+</div>
+<div id= "article">
+<div id = "intro">
+<p style="text-align:center;"><strong>안녕하세요!</strong>  <strong><u>2019004593 홍진수</u>의 자람 워크숍 대체과제 (OPENAPI) 활용 웹페이지</strong> 입니다.<br> <!-- p = 문단 명시 / strong = 밑줄 -->
+<strong>※컴퓨터 브라우저환경에 최적화 되었습니다!※</strong>
+</div>
+<br></p> <!-- u = 밑줄 / br 줄바꿈 -->
+<div id="darkmode">
+  <input type="button" value='Darkmode' style=text-align: center; onclick="
+    NightDayHandler(this);
+  ">
+</div>
+    <p style="text-align:center;font-size:20px;"><strong>역대 블로그 프로필사진</strong></p>
+
+  <p style="text-align:center;"><img src="https://blogpfthumb-phinf.pstatic.net/MjAyMjAxMDVfMjA0/MDAxNjQxMzE5NjE1NTE5.COzBiZRENy6EV5ZGKQje0-56wxVQY8_66xWtzruVaNEg.JIuzWlWmInmbzXBTknOWKRUg-31iLFrD9ouh1X28PUAg.PNG.h1101201/profileImage.png"width="54%"></p>
+  <p style="text-align:center; margin:10px;"><img src="https://blogpfthumb-phinf.pstatic.net/MjAyMjAyMTRfODMg/MDAxNjQ0Nzc2MDI3MTkx._ghnZaHZUdTR6b0HiDNNr0WKp8Sqe5f_FPRSvXLK-cgg.VVTCC66xHaIc0dPbv4LZd-dNIZPQGTuM7N2tNnGKaVgg.PNG.h1101201/profileImage.png"width="55%"></p>
+  <!-- img src = 이미지가 있는 주소 / width 는 사진 비율-->
+  <div class="photo">
+  <strong>Instagram&nbsp;&nbsp;</strong><a href="https://www.instagram.com/bakukun_/?hl=ko" style="color:hotpink" target="_blank" title="instagram">bakukun_</a><br>
+  <strong>Naver Blog&nbsp;&nbsp;</strong><a href="https://blog.naver.com/h1101201" style="color:green" target="_blank" title="Naver Blog">LINK</a>
+</div>
+  <br><br>
+  <!-- hyperlink 태그 = a / href = 주소 / target _blank는 새창에서 열기 /  title은 커서올려놨을때의 글상자-->
+  <ul style="text-align:center; padding-left:0px"> <!-- ol목차(질서 목차) / ol과 li목차는 부모-자식 태그 관계-->
+   <h3>다른사진은 안보고싶어?</h3>
+     <li style="display:inline-block"><a href="photo_1.html" title="d&d Partment Store" style="color:rgb(102, 103, 171)"><strong>카카오톡 배경사진  </strong></a></li>
+     <li style="display:inline-block"><a href="photo_2.html" title="형돈" style="color:rgb(102, 103, 171)"><strong>쫄깃쫄깃 흑돼지</strong></a></li><br>
+   </ul>
+
+   <div id="video">
+ <br><br><p style="text-align:center; margin:5px"><strong>간단한 브이로그</strong> <br>
+   <iframe width="560" height="315" src="https://www.youtube.com/embed/5CzKO4bHPwo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></p>
+   <p style="text-align:center; margin:5px"><strong>간단한 쿡방 </strong> <br>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/49kTmoZf4-o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></p>
+ </div>
+   <br>
+ </div>
+</div>
+
+  </body>
+</html>
