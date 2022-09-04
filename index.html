@@ -29,23 +29,17 @@
 <br></p> <!-- u = 밑줄 / br 줄바꿈 -->
     <p style="text-align:center;font-size:20px;"><strong>카카오맵 OPEN API </strong></p>
     <center><div id="map" style="width:600px;height:400px;"></div></center>
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f21d1d38bfcc5ee51dd97e24f34c680c"></script>
-    <script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f21d1d38bfcc5ee51dd97e24f34c680c">
+
       var container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
       var options = { //지도를 생성할 때 필요한 기본 옵션
           center: new kakao.maps.LatLng(37.29651452315626, 126.83517711544107), //지도의 중심좌표.
           level: 5 //지도의 레벨(확대, 축소 정도)
       };
       var map = new kakao.maps.Map(container, options);
-      var mapTypeControl = new kakao.maps.MapTypeControl();
 
       // 지도에 컨트롤을 추가해야 지도위에 표시됩니다
       // kakao.maps.ControlPosition은 컨트롤이 표시될 위치를 정의하는데 TOPRIGHT는 오른쪽 위를 의미합니다
-      map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
-
-      // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
-      var zoomControl = new kakao.maps.ZoomControl();
-      map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
       var positions = [
     {
@@ -78,6 +72,7 @@ for (var i = 0; i < positions.length; i ++) {
         content: positions[i].content // 인포윈도우에 표시할 내용
     });
 
+
     // 마커에 mouseover 이벤트와 mouseout 이벤트를 등록합니다
     // 이벤트 리스너로는 클로저를 만들어 등록합니다
     // for문에서 클로저를 만들어 주지 않으면 마지막 마커에만 이벤트가 등록됩니다
@@ -98,7 +93,6 @@ function makeOutListener(infowindow) {
         infowindow.close();
     };
 }
-
     </script>
 
    <br>
