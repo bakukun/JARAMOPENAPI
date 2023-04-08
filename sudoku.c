@@ -25,29 +25,107 @@ bool valid[3][9];
 /*
  * 스도쿠 퍼즐의 각 행이 올바른지 검사한다.
  * 행 번호는 0부터 시작하며, i번 행이 올바르면 valid[0][i]에 true를 기록한다.
+ * 각 행마다의 숫자를 체크하는 chk_row라는 임시 bool 배열과 
+ * 중복된 숫자가 있는지를 체크하는 chk라는 bool 임시 변수를 새로 할당하여,
+ * chk_row의 [sudoku[i][j]] 번째 배열, 즉 해당하는 숫자가 이미 나온 적이 있는지 chk_row 배열을 통해 확인한다.
+ * 만약 이미 나온 적이 있다면, chk 변수를 true로 바꾸고 valid[0][i]를 false로 바꿔준다. 
+ * valid[0][i]는 스도쿠 행에 중복된 숫자가 없으면 true, 있다면 false가 된다. 
+ * 이후 검사할 행이 남아있더라도 중복된 숫자가 있었다면 검사를 멈춘다.
+ * 반대로, 모든 행을 검사해도 중복된 숫자가 없다면 valid[0][i]를 true로 바꿔준다.
+ * 마지막으로, pthread_exit(NULL)을 호출하여 쓰레드를 종료한다. 
  */
 void *check_rows(void *arg)
-{
-    // 여기를 완성하세요
+{   
+    int i,j;
+
+
+    for(i = 0; i < 9; i++){ 
+        bool chk_row[10] = { false };
+        bool chk = false;
+        for(j = 0; j < 9; j++){
+            if(chk_row[sudoku[i][j]]){
+                chk = true;
+                valid[0][i] = false;
+                break;
+            }
+            chk_row[sudoku[i][j]] = true;      
+        }
+        if(!chk){
+            valid[0][i] = true;    
+        }
+    }
+    pthread_exit(NULL);
 }
+
 
 /*
  * 스도쿠 퍼즐의 각 열이 올바른지 검사한다.
  * 열 번호는 0부터 시작하며, j번 열이 올바르면 valid[1][j]에 true를 기록한다.
+ * 각 행마다의 숫자를 체크하는 chk_row라는 임시 bool 배열과 
+ * 중복된 숫자가 있는지를 체크하는 chk라는 bool 임시 변수를 새로 할당하여,
+ * chk_row의 [sudoku[j][i]] 번째 배열, 즉 해당하는 숫자가 이미 나온 적이 있는지 chk_row 배열을 통해 확인한다.
+ * 만약 이미 나온 적이 있다면, chk 변수를 true로 바꾸고 valid[1][i]를 false로 바꿔준다. 
+ * valid[1][i]는 스도쿠 열에 중복된 숫자가 없으면 true, 있다면 false가 된다. 
+ * 이후 검사할 열이 남아있더라도 중복된 숫자가 있었다면 검사를 멈춘다.
+ * 반대로, 모든 열을 검사해도 중복된 숫자가 없다면 valid[1][i]를 true로 바꿔준다.
+ * 마지막으로, pthread_exit(NULL)을 호출하여 쓰레드를 종료한다. 
  */
+
 void *check_columns(void *arg)
 {
-    // 여기를 완성하세요
+    int i,j;
+
+    for(i = 0; i < 9; i++){
+        bool chk_row[10] = { false };
+        bool chk = false;
+        for(j = 0; j < 9; j++){
+            if(chk_row[sudoku[j][i]]){
+                chk = true;
+                valid[1][i] = false;
+                break;
+            }
+            chk_row[sudoku[j][i]] = true;
+        }
+        if(!chk){
+            valid[1][i] = true;
+        }
+    }
+    pthread_exit(NULL);
 }
+
+
 
 /*
  * 스도쿠 퍼즐의 각 3x3 서브그리드가 올바른지 검사한다.
  * 3x3 서브그리드 번호는 0부터 시작하며, 왼쪽에서 오른쪽으로, 위에서 아래로 증가한다.
  * k번 서브그리드가 올바르면 valid[2][k]에 true를 기록한다.
+ * 함수의 인자 arg는 검사할 서브그리드의 인덱스(subgrid_i)를 전달하고, subgrid_i는 0부터 8까지의 값을 가진다. 
+ * subgrid_i를 통해 검사할 서브그리드의 시작 행과 열을 계산하고, 이를 row와 col 변수에 저장한다.
+ * 검사할 서브그리드 내부의 각 숫자를 검사하기 위해 이중 반복문을 사용한다. 
+ * 반복문에서는 tmparr 배열을 사용하여 현재 숫자(num)의 사용 여부를 검사한다. 
+ * tmparr[num]이 true이면 중복된 숫자가 있다는 의미로 올바르지 않은 서브그리드이므로, pthread_exit(NULL)을 호출하여 쓰레드를 종료한다. 
+ * 중복된 숫자가 없으면 tmparr[num]을 true로 설정한다.
+ * 모든 숫자에 대한 검사가 끝나면 valid[2][subgrid_i]에 true를 저장한다. 
+ * 이후 pthread_exit(NULL)을 호출하여 쓰레드를 종료한다.
  */
 void *check_subgrid(void *arg)
 {
-    // 여기를 완성하세요
+    int subgrid_i = *((int *)arg); 
+    int row = (subgrid_i / 3) * 3;
+    int col = (subgrid_i % 3) * 3;
+    bool tmparr[10] = { false }; 
+    for (int i = row; i < row + 3; i++) {
+        for (int j = col; j < col + 3; j++) {
+            int num = sudoku[i][j];
+            if (tmparr[num]) {
+                pthread_exit(NULL);
+            } else {
+                tmparr[num] = true;
+            }
+        }
+    }
+    valid[2][subgrid_i] = true;
+    pthread_exit(NULL);
 }
 
 /*
@@ -69,22 +147,33 @@ void check_sudoku(void)
     }
     printf("---\n");
     /*
+     * 먼저 11개의 스레드를 생성하고, 
      * 스레드를 생성하여 각 행을 검사하는 check_rows() 함수를 실행한다.
      */
-    // 여기를 완성하세요
+    pthread_t threads[11];
+    int thread_args[11];
+
+    thread_args[0] = 0;
+    pthread_create(&threads[0], NULL, check_rows, &thread_args[0]);
     /*
      * 스레드를 생성하여 각 열을 검사하는 check_columns() 함수를 실행한다.
      */
-    // 여기를 완성하세요
+    thread_args[1] = 0;
+    pthread_create(&threads[1], NULL, check_columns, &thread_args[1]);
     /*
      * 9개의 스레드를 생성하여 각 3x3 서브그리드를 검사하는 check_subgrid() 함수를 실행한다.
      * 3x3 서브그리드의 위치를 식별할 수 있는 값을 함수의 인자로 넘긴다.
      */
-    // 여기를 완성하세요
+    for (int i = 0; i < 9; i++) {
+        thread_args[i+2] = i;
+        pthread_create(&threads[i+2], NULL, check_subgrid, &thread_args[i+2]);
+    }
     /*
      * 11개의 스레드가 종료할 때까지 기다린다.
      */
-    // 여기를 완성하세요
+    for (int i = 0; i < 11; i++) {
+        pthread_join(threads[i], NULL);
+    }
     /*
      * 각 행에 대한 검증 결과를 출력한다.
      */
