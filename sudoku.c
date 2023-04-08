@@ -76,15 +76,15 @@ void *check_columns(void *arg)
     int i,j;
 
     for(i = 0; i < 9; i++){
-        bool chk_row[10] = { false };
+        bool chk_col[10] = { false };
         bool chk = false;
         for(j = 0; j < 9; j++){
-            if(chk_row[sudoku[j][i]]){
+            if(chk_col[sudoku[j][i]]){
                 chk = true;
                 valid[1][i] = false;
                 break;
             }
-            chk_row[sudoku[j][i]] = true;
+            chk_col[sudoku[j][i]] = true;
         }
         if(!chk){
             valid[1][i] = true;
