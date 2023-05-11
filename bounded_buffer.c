@@ -136,6 +136,7 @@ void *consumer(void *arg)
         /*
          * 소비자를 기록하고 미생산 또는 중복소비 아닌지 검증한다.
          */
+
         if (task_log[item][0] == -1) {        
             lock = false; // 임계 영역을 벗어날 때 lock을 false로 변경하여 다른 스레드가 접근할 수 있도록 해제한다.
             printf(RED"<C%d,%d>"RESET"....ERROR: 아이템 %d 미생산\n", i, item, item);
@@ -190,7 +191,7 @@ int main(void)
      * 스레드가 출력하는 동안 1 밀리초 쉰다.
      * 이 시간으로 스레드의 출력량을 조절한다.
      */
-    usleep(10000);
+    usleep(1000);
     /*
      * 스레드가 자연스럽게 무한 루프를 빠져나올 수 있게 한다.
      */
