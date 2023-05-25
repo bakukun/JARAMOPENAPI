@@ -3,6 +3,7 @@
  * 이 프로그램은 한양대학교 ERICA 컴퓨터학부 학생을 위한 교육용으로 제작되었다.
  * 한양대학교 ERICA 학생이 아닌 이는 프로그램을 수정하거나 배포할 수 없다.
  * 프로그램을 수정할 경우 날짜, 학과, 학번, 이름, 수정 내용을 기록한다.
+  * 2023-05-25 , 컴퓨터학부 , 2019004593 , 홍진수 , POSIX 뮤텍스락을 사용하여 공정한 reader-writer 방식(선착순으로 CS에 들어가면서 reader의 중복을 최대한 허용하는 방식)을 구현 
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -366,6 +367,15 @@ char *img5[L5] = {
  * alive 값이 false가 되면 무한 루프를 빠져나와 스레드를 자연스럽게 종료한다.
  */
 bool alive = true;
+// 크리티컬 섹션 진입을 위한 뮤텍스 (크리티컬 섹션에 진입을 제한하고 공유 자원의 보호를 위해 사용)
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+// 큐 뮤텍스 (스레드의 실행 순서와 우선순위를 제어하기 위해 사용)
+pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+// reader 스레드 관련 뮤텍스
+pthread_mutex_t reader_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+int active_readers = 0; // 활성화된 reader 스레드 수
 
 /*
  * Reader 스레드는 같은 문자를 L0번 출력한다. 예를 들면 <AAA...AA> 이런 식이다.
@@ -385,6 +395,18 @@ void *reader(void *arg)
      * 스레드가 살아 있는 동안 같은 문자열 시퀀스 <XXX...XX>를 반복해서 출력한다.
      */
     while (alive) {
+        // queue 뮤텍스를 먼저 락을 걸고, reader 뮤텍스를 락을 걸어 크리티컬 섹션에 진입할 때 
+        // 다른 Reader 스레드가 크리티컬 섹션에 동시에 진입하지 못하도록 함
+        pthread_mutex_lock(&queue_mutex);
+        pthread_mutex_lock(&reader_mutex);
+        active_readers++;
+        // active_readers를 증가시키고, 첫 번째 Reader 스레드가 크리티컬 섹션에 진입하는 경우 
+        if(active_readers == 1)
+        // mutex 뮤텍스를 락을 걸어 Writer 스레드나 다른 Reader 스레드가 크리티컬 섹션에 진입하지 못하도록 함
+            pthread_mutex_lock(&mutex);
+        // // reader 와 queue 뮤텍스의 락을 푸고 크리티컬 섹션에 진입
+        pthread_mutex_unlock(&queue_mutex);
+        pthread_mutex_unlock(&reader_mutex);
         /*
          * Begin Critical Section
          */
@@ -392,9 +414,19 @@ void *reader(void *arg)
         for (i = 0; i < L0; ++i)
             printf("%c", 'A'+id);
         printf(">");
-        /* 
+
+        /*
          * End Critical Section
          */
+        // 크리티컬 섹션을 나와서 reader 뮤텍스를 락을 걸고, active_readers 값을 감소
+        pthread_mutex_lock(&reader_mutex);
+        active_readers--;
+        // 마지막 Reader 스레드가 크리티컬 섹션을 빠져나오는 경우(active_readers == 0), 
+        // mutex 뮤텍스의 락을 푸어 다른 스레드들이 크리티컬 섹션에 진입할 수 있도록 함
+        if (active_readers == 0)
+            pthread_mutex_unlock(&mutex);
+        // reader_mutex 뮤텍스의 락을 푸어 크리티컬 섹션을 완전히 벗어남
+        pthread_mutex_unlock(&reader_mutex);
     }
     pthread_exit(NULL);
 }
@@ -420,6 +452,11 @@ void *writer(void *arg)
      * 스레드가 살아 있는 동안 같은 이미지를 반복해서 출력한다.
      */
     while (alive) {
+        // 크리티컬 섹션에 진입하기 전에 queue_mutex에 대한 락을 획득하여 독점적인 접근을 보장
+        pthread_mutex_lock(&queue_mutex);
+        // mutex 락 획득
+        pthread_mutex_lock(&mutex);
+        
         /*
          * Begin Critical Section
          */
@@ -448,6 +485,11 @@ void *writer(void *arg)
             default:
                 ;
         }
+        // 다른 스레드 가 크리티컬 섹션에 진입할 수 있도록 mutex의 락을 해제
+         pthread_mutex_unlock(&mutex);
+         // 크리티컬 섹션을 빠져나온 후 queue_mutex의 락을 해제
+         pthread_mutex_unlock(&queue_mutex);
+
         /* 
          * End Critical Section
          */
@@ -473,6 +515,10 @@ int main(void)
     pthread_t rthid[NREAD];
     pthread_t wthid[NWRITE];
     struct timespec req;
+    // 조건 변수와 뮤텍스 락 초기화
+    pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&reader_mutex, NULL);
+    pthread_mutex_init(&queue_mutex, NULL);
 
     /*
      * Create NREAD reader threads
@@ -508,6 +554,10 @@ int main(void)
         pthread_join(rthid[i], NULL);
     for (i = 0; i < NWRITE; ++i)
         pthread_join(wthid[i], NULL);
-    
+    // 조건 변수와 뮤텍스 락 destroy
+    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&reader_mutex);
+    pthread_mutex_destroy(&queue_mutex);
+
     return 0;
 }
