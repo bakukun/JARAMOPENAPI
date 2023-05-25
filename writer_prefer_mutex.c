@@ -3,6 +3,8 @@
  * 이 프로그램은 한양대학교 ERICA 컴퓨터학부 학생을 위한 교육용으로 제작되었다.
  * 한양대학교 ERICA 학생이 아닌 이는 프로그램을 수정하거나 배포할 수 없다.
  * 프로그램을 수정할 경우 날짜, 학과, 학번, 이름, 수정 내용을 기록한다.
+ * 2023-05-25 , 컴퓨터학부 , 2019004593 , 홍진수 , POSIX 뮤텍스락을 사용하여 writer 선호 방식(Reader의 중복을 최대한 허용하되 기다리는 writer가 있으면 reader가 더 이상 writer를 앞지
+르지 못하게 하는 방식)을 구현
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -366,6 +368,19 @@ char *img5[L5] = {
  * alive 값이 false가 되면 무한 루프를 빠져나와 스레드를 자연스럽게 종료한다.
  */
 bool alive = true;
+ // 크리티컬 섹션 진입을 위한 뮤텍스 (크리티컬 섹션에 진입을 제한하고 공유 자원의 보호를 위해 사용)
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+// writer 스레드 관련 뮤텍스
+pthread_mutex_t writer_mutex = PTHREAD_MUTEX_INITIALIZER;
+// reader 스레드 관련 뮤텍스
+pthread_mutex_t reader_mutex = PTHREAD_MUTEX_INITIALIZER;
+// 큐 뮤텍스 (스레드의 실행 순서와 우선순위를 제어하기 위해 사용)
+pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int active_readers = 0; // 활성화된 reader 스레드 수
+int active_writers = 0; // 활성화된 writer 스레드 수
+
+
 
 /*
  * Reader 스레드는 같은 문자를 L0번 출력한다. 예를 들면 <AAA...AA> 이런 식이다.
@@ -377,6 +392,7 @@ void *reader(void *arg)
 {
     int id, i;
 
+        
     /*
      * 들어온 인자를 통해 출력할 문자의 종류를 정한다.
      */
@@ -385,16 +401,40 @@ void *reader(void *arg)
      * 스레드가 살아 있는 동안 같은 문자열 시퀀스 <XXX...XX>를 반복해서 출력한다.
      */
     while (alive) {
+        // queue 뮤텍스를 먼저 락을 걸고, reader 뮤텍스를 락을 걸어 크리티컬 섹션에 진입할 때 
+        // 다른 Reader 스레드가 크리티컬 섹션에 동시에 진입하지 못하도록 함
+        pthread_mutex_lock(&queue_mutex);
+        pthread_mutex_lock(&reader_mutex);
+        // active_readers를 증가시키고, 첫 번째 Reader 스레드가 크리티컬 섹션에 진입하는 경우 
+        active_readers++;
+        if(active_readers == 1)
+        // mutex 뮤텍스를 락을 걸어 Writer 스레드나 다른 Reader 스레드가 크리티컬 섹션에 진입하지 못하도록 함
+            pthread_mutex_lock(&mutex);
+        // reader 와 queue 뮤텍스의 락을 푸고 크리티컬 섹션에 진입
+        pthread_mutex_unlock(&reader_mutex);
+        pthread_mutex_unlock(&queue_mutex);
+        
         /*
          * Begin Critical Section
          */
+        
         printf("<");
         for (i = 0; i < L0; ++i)
             printf("%c", 'A'+id);
         printf(">");
-        /* 
+        /*
          * End Critical Section
          */
+        // 크리티컬 섹션을 나와서 reader 뮤텍스를 락을 걸고, active_readers 값을 감소
+        pthread_mutex_lock(&reader_mutex);
+        active_readers--;
+        // 마지막 Reader 스레드가 크리티컬 섹션을 빠져나오는 경우(active_readers == 0), 
+        // mutex 뮤텍스의 락을 푸어 다른 스레드들이 크리티컬 섹션에 진입할 수 있도록 함
+        if (active_readers == 0)
+            pthread_mutex_unlock(&mutex);
+        // reader_mutex 뮤텍스의 락을 푸어 크리티컬 섹션을 완전히 벗어남
+        pthread_mutex_unlock(&reader_mutex);
+
     }
     pthread_exit(NULL);
 }
@@ -420,6 +460,19 @@ void *writer(void *arg)
      * 스레드가 살아 있는 동안 같은 이미지를 반복해서 출력한다.
      */
     while (alive) {
+        // write 뮤텍스를 락을 걸어 Writer 스레드가 크리티컬 섹션에 진입할 때,
+        // 다른 스레드가 크리티컬 섹션에 동시에 진입하지 못하도록 함
+        pthread_mutex_lock(&writer_mutex);
+        //처음으로 Writer 스레드가 크리티컬 섹션에 진입하는 경우(active_writers == 0), 
+        // queue 뮤텍스를 락을 걸어 다른 스레드들이 크리티컬 섹션에 진입하지 못하도록 함
+        if (active_writers == 0)
+          pthread_mutex_lock(&queue_mutex);
+        // active_writers 값을 증가시키고, writer 뮤텍스의 락을 푸어 크리티컬 섹션에 진입
+        active_writers++;
+        pthread_mutex_unlock(&writer_mutex);
+        // mutex 뮤텍스를 락을 걸어 Writer 스레드가 크리티컬 섹션에 진입할 때 
+        // 다른 스레드들이 크리티컬 섹션에 진입하지 못하도록 함
+        pthread_mutex_lock(&mutex);
         /*
          * Begin Critical Section
          */
@@ -451,9 +504,21 @@ void *writer(void *arg)
         /* 
          * End Critical Section
          */
+        // 크리티컬 섹션을 나와서 mutex 뮤텍스의 락을 푸고 Writer 스레드가 크리티컬 섹션을 완전히 벗어남
+        pthread_mutex_unlock(&mutex);
+        // writer 뮤텍스를 락을 걸고, active_writers 값을 감소
+        pthread_mutex_lock(&writer_mutex);
+        active_writers--;
+        // 마지막 Writer 스레드가 크리티컬 섹션을 빠져나오는 경우(active_writers == 0), 
+        // queue 뮤텍스의 락을 푸어 다른 스레드들이 크리티컬 섹션에 진입할 수 있도록 함
+        if (active_writers == 0)
+          pthread_mutex_unlock(&queue_mutex);
+        // write 뮤텍스의 락을 푸어 크리티컬 섹션을 완전히 벗어남
+        pthread_mutex_unlock(&writer_mutex);
         /*
          * 이미지 출력 후 SLEEPTIME 나노초 안에서 랜덤하게 쉰다.
          */
+
         req.tv_sec = 0;
         req.tv_nsec = rand() % SLEEPTIME;
         nanosleep(&req, NULL);
@@ -473,7 +538,11 @@ int main(void)
     pthread_t rthid[NREAD];
     pthread_t wthid[NWRITE];
     struct timespec req;
-
+    // 조건 변수와 뮤텍스 락 초기화
+    pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&writer_mutex, NULL);
+    pthread_mutex_init(&reader_mutex, NULL);
+    pthread_mutex_init(&queue_mutex, NULL);
     /*
      * Create NREAD reader threads
      */
@@ -508,6 +577,12 @@ int main(void)
         pthread_join(rthid[i], NULL);
     for (i = 0; i < NWRITE; ++i)
         pthread_join(wthid[i], NULL);
-    
+
+    // 조건 변수와 뮤텍스 락 destroy
+    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&writer_mutex);
+    pthread_mutex_destroy(&reader_mutex);
+    pthread_mutex_destroy(&queue_mutex);
+
     return 0;
 }
