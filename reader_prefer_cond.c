@@ -3,6 +3,8 @@
  * 이 프로그램은 한양대학교 ERICA 컴퓨터학부 학생을 위한 교육용으로 제작되었다.
  * 한양대학교 ERICA 학생이 아닌 이는 프로그램을 수정하거나 배포할 수 없다.
  * 프로그램을 수정할 경우 날짜, 학과, 학번, 이름, 수정 내용을 기록한다.
+ * 2023-05-25 , 컴퓨터학부 , 2019004593 , 홍진수 , POSIX 조건변수를 사용하여 reader 선호 방식(Reader의 중복을 최대한 허용하되 늦게 온 reader가 기다리고 있는 writer를 앞지를
+수 있게하는 방식)을 구현
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -367,6 +369,11 @@ char *img5[L5] = {
  */
 bool alive = true;
 
+// Reader 선호 방식을 위한 조건 변수와 뮤텍스 락, reader 스레드의 수를 세는 변수 추가
+pthread_cond_t read_cond;
+pthread_mutex_t mutex;
+int reader_count = 0;
+
 /*
  * Reader 스레드는 같은 문자를 L0번 출력한다. 예를 들면 <AAA...AA> 이런 식이다.
  * 출력할 문자는 인자를 통해 0이면 A, 1이면 B, ..., 등으로 출력하며, 시작과 끝을 <...>로 나타낸다.
@@ -385,6 +392,13 @@ void *reader(void *arg)
      * 스레드가 살아 있는 동안 같은 문자열 시퀀스 <XXX...XX>를 반복해서 출력한다.
      */
     while (alive) {
+        //먼저 뮤텍스 락을 획득하고, 이 뮤텍스 락은 critical section에 들어가기 위해 사용
+        pthread_mutex_lock(&mutex); 
+        // Reader 선호 방식을 위해 reader_count를 증가시킴
+        reader_count++; 
+        //뮤텍스 락을 해제
+        pthread_mutex_unlock(&mutex); 
+
         /*
          * Begin Critical Section
          */
@@ -392,6 +406,16 @@ void *reader(void *arg)
         for (i = 0; i < L0; ++i)
             printf("%c", 'A'+id);
         printf(">");
+        // 다시 뮤텍스 락을 획득
+        pthread_mutex_lock(&mutex); 
+        // reader 스레드가 critical section을 빠져나오면서 reader_count를 감소
+        reader_count--; 
+        // 마지막 reader가 CS를 빠져나왔을 때, 대기중인 writer 스레드를 깨우기 위해 조건 변수인 read_cond를 signal
+        if (reader_count == 0) {
+            pthread_cond_broadcast(&read_cond);
+        }
+        // 다시 뮤텍스 락을 해제
+        pthread_mutex_unlock(&mutex);
         /* 
          * End Critical Section
          */
@@ -420,6 +444,12 @@ void *writer(void *arg)
      * 스레드가 살아 있는 동안 같은 이미지를 반복해서 출력한다.
      */
     while (alive) {
+        //먼저 뮤텍스 락을 획득하고, 이 뮤텍스 락은 critical section에 들어가기 위해 사용
+        pthread_mutex_lock(&mutex);
+        // Reader 선호 방식을 위해 reader_count가 0이 될 때까지 대기
+        while (reader_count > 0) {
+            pthread_cond_wait(&read_cond, &mutex);
+        }
         /*
          * Begin Critical Section
          */
@@ -457,6 +487,8 @@ void *writer(void *arg)
         req.tv_sec = 0;
         req.tv_nsec = rand() % SLEEPTIME;
         nanosleep(&req, NULL);
+        //뮤텍스 락을 해제
+        pthread_mutex_unlock(&mutex);
     }
     pthread_exit(NULL);
 }
@@ -473,6 +505,10 @@ int main(void)
     pthread_t rthid[NREAD];
     pthread_t wthid[NWRITE];
     struct timespec req;
+
+    // 조건 변수와 뮤텍스 락 초기화
+    pthread_cond_init(&read_cond, NULL);
+    pthread_mutex_init(&mutex, NULL);
 
     /*
      * Create NREAD reader threads
@@ -504,10 +540,15 @@ int main(void)
      * Now terminate all threads and leave
      */
     alive = false;
+
     for (i = 0; i < NREAD; ++i)
         pthread_join(rthid[i], NULL);
     for (i = 0; i < NWRITE; ++i)
         pthread_join(wthid[i], NULL);
+
+    // 조건 변수와 뮤텍스 락 destroy
+    pthread_cond_destroy(&read_cond);
+    pthread_mutex_destroy(&mutex);
     
     return 0;
 }
