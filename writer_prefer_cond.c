@@ -3,6 +3,8 @@
  * 이 프로그램은 한양대학교 ERICA 컴퓨터학부 학생을 위한 교육용으로 제작되었다.
  * 한양대학교 ERICA 학생이 아닌 이는 프로그램을 수정하거나 배포할 수 없다.
  * 프로그램을 수정할 경우 날짜, 학과, 학번, 이름, 수정 내용을 기록한다.
+ * 2023-05-25 , 컴퓨터학부 , 2019004593 , 홍진수 , POSIX 조건변수를 사용하여 writer 선호 방식(Reader의 중복을 최대한 허용하되 기다리는 writer가 있으면 reader가 더 이상 writer를 앞지
+르지 못하게 하는 방식)을 구현
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -366,6 +368,14 @@ char *img5[L5] = {
  * alive 값이 false가 되면 무한 루프를 빠져나와 스레드를 자연스럽게 종료한다.
  */
 bool alive = true;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // 뮤텍스 초기화
+pthread_cond_t cond_reader = PTHREAD_COND_INITIALIZER; // reader 스레드 조건 변수 초기화
+pthread_cond_t cond_writer = PTHREAD_COND_INITIALIZER; // writer 스레드 조건 변수 초기화
+int active_readers = 0; // 활성화된 reader 스레드 수
+int waiting_readers = 0; // 대기 중인 reader 스레드 수
+int waiting_writers = 0; // 대기 중인 writer 스레드 수
+int active_writers = 0; // 활성화된 writer 스레드 수
+
 
 /*
  * Reader 스레드는 같은 문자를 L0번 출력한다. 예를 들면 <AAA...AA> 이런 식이다.
@@ -385,6 +395,20 @@ void *reader(void *arg)
      * 스레드가 살아 있는 동안 같은 문자열 시퀀스 <XXX...XX>를 반복해서 출력한다.
      */
     while (alive) {
+        // 뮤텍스 락 획득
+        pthread_mutex_lock(&mutex);
+        // 대기 중인 reader 스레드 수 증가
+        waiting_readers++;
+        // 활성화 된 writer 스레드나 writer 스레드가 있으면 대기 
+        while (active_writers > 0 || waiting_writers > 0) {
+            pthread_cond_wait(&cond_reader, &mutex);
+        }
+        // 대기 중인 reader 스레드 수 감소
+        waiting_readers--;
+        // 활성화된 reader 스레드 수 증가
+        active_readers++;
+        // 뮤텍스 락 해제
+        pthread_mutex_unlock(&mutex);
         /*
          * Begin Critical Section
          */
@@ -392,6 +416,16 @@ void *reader(void *arg)
         for (i = 0; i < L0; ++i)
             printf("%c", 'A'+id);
         printf(">");
+        // 뮤텍스 락 획득
+        pthread_mutex_lock(&mutex);
+        // 활성화된 reader 스레드 수 감소
+        active_readers--;
+        //만약 활성화된 reader가 없고 기다리는 writer가 1개 이상이면 대기 중인 writer 스레드 중 하나를 깨움
+        if (active_readers == 0 && waiting_writers > 0) {
+            pthread_cond_signal(&cond_writer);
+        }
+        // 뮤텍스 락 해제
+        pthread_mutex_unlock(&mutex);
         /* 
          * End Critical Section
          */
@@ -420,6 +454,20 @@ void *writer(void *arg)
      * 스레드가 살아 있는 동안 같은 이미지를 반복해서 출력한다.
      */
     while (alive) {
+        // 뮤텍스 락 획득
+        pthread_mutex_lock(&mutex);
+        // 대기 중인 writer 스레드 수 증가
+        waiting_writers++;
+        // 활성화 된 reader 스레드나 writer 스레드가 있으면 대기 
+        while (active_readers > 0 || active_writers > 0) {
+            pthread_cond_wait(&cond_writer, &mutex);
+        }
+        // 대기 중인 writer 스레드 수 감소
+        waiting_writers--;
+        // 활성화된 writer 스레드 수 증가
+        active_writers++;
+        // 뮤텍스 락 해제
+        pthread_mutex_unlock(&mutex);
         /*
          * Begin Critical Section
          */
@@ -451,6 +499,21 @@ void *writer(void *arg)
         /* 
          * End Critical Section
          */
+        // 뮤텍스 락 획득
+        pthread_mutex_lock(&mutex);
+        // 활성화된 writer 스레드 수 감소
+        active_writers--;
+
+        // 만약 기다리는 reader가 있는데 기다리고 활성화된 writer가 없다면 모든 waiting 하는 reader들 깨움
+        if (waiting_readers > 0 && waiting_writers == 0 && active_writers == 0) {
+            pthread_cond_broadcast(&cond_reader);
+        // 기다리는 writer가 있다면 그 writer를 깨움
+        } else if (waiting_writers > 0) {
+            pthread_cond_signal(&cond_writer);
+        }
+        // 뮤텍스 락 해제
+        pthread_mutex_unlock(&mutex);
+
         /*
          * 이미지 출력 후 SLEEPTIME 나노초 안에서 랜덤하게 쉰다.
          */
@@ -473,6 +536,10 @@ int main(void)
     pthread_t rthid[NREAD];
     pthread_t wthid[NWRITE];
     struct timespec req;
+    // 조건 변수와 뮤텍스 락 초기화
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&cond_reader, NULL);
+    pthread_cond_init(&cond_writer, NULL);
 
     /*
      * Create NREAD reader threads
@@ -509,5 +576,10 @@ int main(void)
     for (i = 0; i < NWRITE; ++i)
         pthread_join(wthid[i], NULL);
     
+    // 조건 변수와 뮤텍스 락 destroy
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond_reader);
+    pthread_cond_destroy(&cond_writer);
+
     return 0;
 }
